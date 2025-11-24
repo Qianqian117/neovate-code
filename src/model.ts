@@ -77,6 +77,34 @@ export type ProvidersMap = Record<string, Provider>;
 export type ModelMap = Record<string, Omit<Model, 'id' | 'cost'>>;
 
 export const models: ModelMap = {
+  'ling-1t': {
+    name: 'Ling-1T',
+    shortName: 'Ling',
+    attachment: true,
+    reasoning: false,
+    temperature: true,
+    tool_call: true,
+    knowledge: '2025-10',
+    release_date: '2025-10-09',
+    last_updated: '2025-10-09',
+    modalities: { input: ['text'], output: ['text'] },
+    open_weights: false,
+    limit: { context: 128000, output: 32000 },
+  },
+  'ring-1t': {
+    name: 'Ring-1T',
+    shortName: 'Ring',
+    attachment: true,
+    reasoning: true,
+    temperature: true,
+    tool_call: true,
+    knowledge: '2025-10',
+    release_date: '2025-10-14',
+    last_updated: '2025-10-14',
+    modalities: { input: ['text'], output: ['text'] },
+    open_weights: false,
+    limit: { context: 128000, output: 32000 },
+  },
   'deepseek-v3-0324': {
     name: 'DeepSeek-V3-0324',
     shortName: 'DeepSeek V3',
@@ -975,6 +1003,35 @@ export const defaultModelCreator = (
 };
 
 export const providers: ProvidersMap = {
+  bailing: {
+    id: 'bailing',
+    env: ['BAILING_API_KEY'],
+    name: 'Ling',
+    api: 'https://api.tbox.cn/api/llm/v1',
+    doc: 'https://alipaytbox.yuque.com/sxs0ba/ling',
+    models: {
+      'ling-1t': models['ling-1t'],
+      'ring-1t': models['ring-1t'],
+    },
+    createModel(name, provider) {
+      const baseURL = getProviderBaseURL(provider);
+      const apiKey = getProviderApiKey(provider);
+
+      if (!apiKey) {
+        throw new Error('Bailing API key is required');
+      }
+
+      return createOpenAICompatible({
+        name: 'bailing',
+        baseURL: baseURL || 'https://api.tbox.cn/api/llm/v1',
+        apiKey: apiKey,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'X-Custom-Header': 'Bailing-AI',
+        },
+      })(name);
+    },
+  },
   'github-copilot': {
     id: 'github-copilot',
     env: [],
@@ -1481,6 +1538,8 @@ export const providers: ProvidersMap = {
 // value format: provider/model
 export type ModelAlias = Record<string, string>;
 export const modelAlias: ModelAlias = {
+  Ling: 'bailing/ling-1t',
+  Ring: 'bailing/ring-1t',
   deepseek: 'deepseek/deepseek-chat',
   r1: 'deepseek/deepseek-reasoner',
   '41': 'openai/gpt-4.1',
